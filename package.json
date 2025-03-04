@@ -11,7 +11,7 @@
     "openapiOutput": "src/app/shared/generated"
   },
   "scripts": {
-    "build": "nx build",
+    "build": "nx run build --verbose --skip-nx-cache",
     "check": "nx lint --cache=true && npx prettier -c --cache .",
     "clean": "npm cache clean --force && rm -rf *.log dist reports .nx .angular .eslintcache ./node_modules/.cache/prettier/.prettier-cache",
     "lint": "nx lint --cache=true",
@@ -40,8 +40,6 @@
     "reportPath": "reports"
   },
   "dependencies": {
-    "@angular-architects/module-federation": "18.0.6",
-    "@angular-architects/module-federation-tools": "18.0.6",
     "@angular/animations": "^18.2.12",
     "@angular/common": "^18.2.12",
     "@angular/compiler": "^18.2.12",
@@ -51,6 +49,8 @@
     "@angular/platform-browser": "^18.2.12",
     "@angular/platform-browser-dynamic": "^18.2.12",
     "@angular/router": "^18.2.12",
+    "@module-federation/enhanced": "^0.10.0",
+    "@module-federation/runtime-core": "^0.10.0",
     "@ngx-translate/core": "^15.0.0",
     "@nx/angular": "19.8.2",
     "@onecx/accelerator": "^5.32.1",
@@ -120,6 +120,7 @@
     "sonarqube-scanner": "4.2.2",
     "ts-jest": "^29.2.5",
     "ts-node": "10.9.2",
-    "typescript": "~5.5.4"
+    "typescript": "~5.5.4",
+    "webpack-cli": "^6.0.1"
   }
 }
