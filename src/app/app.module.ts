@@ -21,12 +21,24 @@ import {
 } from '@onecx/angular-integration-interface'
 import { AngularRemoteComponentsModule, SLOT_SERVICE, SlotService } from '@onecx/angular-remote-components'
 
-import { createTranslateLoader,  provideThemeConfig, SKIP_STYLE_SCOPING, provideTranslationPathFromMeta } from '@onecx/angular-utils'
+import {
+  createTranslateLoader,
+  provideThemeConfig,
+  SKIP_STYLE_SCOPING,
+  provideTranslationPathFromMeta
+} from '@onecx/angular-utils'
 import { ShellCoreModule, SHOW_CONTENT_PROVIDER, WORKSPACE_CONFIG_BFF_SERVICE_PROVIDER } from '@onecx/shell-core'
-import { CurrentLocationPublisher, EventsPublisher, NavigatedEventPayload, Theme } from '@onecx/integration-interface'
+import {
+  CurrentLocationPublisher,
+  EventsPublisher,
+  NavigatedEventPayload,
+  Theme,
+  UserProfile
+} from '@onecx/integration-interface'
 
 import {
   BASE_PATH,
+  GetUserProfileResponse,
   LoadWorkspaceConfigResponse,
   UserProfileBffService,
   WorkspaceConfigBffService
@@ -50,6 +62,17 @@ import { styleChangesListenerInitializer } from './shell/utils/styles/style-chan
 import { WelcomeMessageComponent } from './shell/components/welcome-message-component/welcome-message.component'
 import { ParametersService } from './shell/services/parameters.service'
 import { applyPerformancePolyfill, applyPrecisionPolyfill } from 'src/scope-polyfill/polyfill'
+
+export function normalizeLocales(locales: string[] | undefined): string[] {
+  if (!locales || locales.length === 0) return []
+  const expanded: string[] = []
+  for (const locale of locales) {
+    if (!expanded.includes(locale)) expanded.push(locale)
+    const lang = locale.split(/[-_]/)[0]
+    if (!expanded.includes(lang)) expanded.push(lang)
+  }
+  return expanded
+}
 
 async function shellStylesInitializer(appStateService: AppStateService, http: HttpClient) {
   await appStateService.isAuthenticated$.isInitialized
@@ -142,7 +165,7 @@ export async function userProfileInitializer(
   router: Router
 ) {
   await appStateService.isAuthenticated$.isInitialized
-  const getUserProfileResponse = await firstValueFrom(
+  const getUserProfileResponse: GetUserProfileResponse = await firstValueFrom(
     userProfileBffService.getUserProfile().pipe(
       retry({ delay: 500, count: 3 }),
       catchError((error) => {
@@ -153,8 +176,27 @@ export async function userProfileInitializer(
 
   if (getUserProfileResponse) {
     console.log('ORGANIZATION : ', getUserProfileResponse.userProfile.organization)
+    // let locales: string[] | undefined
+    // if (localeSettings?.locales) {
+    //   locales = localeSettings.locales
+    // }
 
-    await userService.profile$.publish(getUserProfileResponse.userProfile)
+    // if (!locales || locales.length === 0) {
+    //   locales = Array.from(navigator.languages)
+    // }
+
+    const profile: UserProfile = { ...getUserProfileResponse.userProfile }
+    profile.accountSettings ??= {}
+    profile.accountSettings.localeAndTimeSettings ??= {}
+    profile.accountSettings.localeAndTimeSettings.locales ??= []
+
+    if (profile.accountSettings.localeAndTimeSettings.locales.length === 0) {
+      profile.accountSettings.localeAndTimeSettings.locales = getNormalizedBrowserLocales()
+    } else {
+      profile.accountSettings.localeAndTimeSettings.locales = normalizeLocales(profile.accountSettings.localeAndTimeSettings.locales)
+    }
+
+    await userService.profile$.publish(profile)
   }
 }
 
